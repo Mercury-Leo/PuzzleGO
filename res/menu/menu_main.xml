@@ -1,0 +1,26 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.puzzle15v2.MainActivity">
+    <item
+        android:id="@+id/action_about"
+        android:orderInCategory="100"
+        android:title="About"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_serviceon"
+        android:orderInCategory="200"
+        android:title="Turn-on Location tracking"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_serviceoff"
+        android:orderInCategory="300"
+        android:title="Turn-off Location tracking"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_exit"
+        android:orderInCategory="400"
+        android:title="Exit"
+        app:showAsAction="never" />
+
+</menu>
