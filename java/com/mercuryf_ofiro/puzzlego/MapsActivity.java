@@ -103,7 +103,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Double[] getmLikelyPlaceNum;
     private LatLng[] mLikelyPlaceLatLngs;
     private PhotoMetadata[] getPhotoPlace;
-    String serverKey = "AIzaSyD2MTsBcjEIYPT-bFBXPOKrpy56d3pdHOQ";
     public PlacesClient placesClient;
     ImageView img;
 
