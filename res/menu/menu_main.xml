@@ -18,6 +18,11 @@
         android:title="Turn-off Location tracking"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_prize"
+        android:orderInCategory="400"
+        android:title="Prize Room"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_exit"
         android:orderInCategory="400"
         android:title="Exit"

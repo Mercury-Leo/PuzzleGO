@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">PuzzleGO</string>
     <string name="title_activity_maps">PuzzleGO</string>
+    <string name="title_activity_game_controller">GameController</string>
+    <string name="title_activity_game">GameActivity</string>
 </resources>
