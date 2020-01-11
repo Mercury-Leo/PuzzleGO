@@ -41,12 +41,11 @@
         android:layout_width="349dp"
         android:layout_height="262dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         android:weightSum="16"
-        app:layout_constraintBottom_toTopOf="@+id/btn_new_game"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.565"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_moves">
 
@@ -61,13 +60,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="0"
                 android:layout_weight="1"
-                android:text="1"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="1"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile1"
@@ -75,13 +73,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_weight="1"
-                android:text="2"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="2"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile2"
@@ -89,13 +86,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_weight="1"
-                android:text="3"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="3"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile3"
@@ -103,13 +99,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="3"
                 android:layout_weight="1"
-                android:text="4"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="4"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
         </TableRow>
 
@@ -124,13 +119,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="0"
                 android:layout_weight="1"
-                android:text="5"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="5"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile5"
@@ -138,13 +132,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_weight="1"
-                android:text="6"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="6"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile6"
@@ -152,13 +145,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_weight="1"
-                android:text="7"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="7"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile7"
@@ -166,13 +158,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="3"
                 android:layout_weight="1"
-                android:text="8"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="8"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
         </TableRow>
 
@@ -188,13 +179,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="0"
                 android:layout_weight="1"
-                android:text="9"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="9"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile9"
@@ -202,13 +192,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_weight="1"
-                android:text="10"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="10"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile10"
@@ -216,13 +205,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="2"
                 android:layout_weight="1"
-                android:text="11"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="11"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile11"
@@ -230,13 +218,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="3"
                 android:layout_weight="1"
-                android:text="12"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="12"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
         </TableRow>
 
@@ -251,13 +238,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="0"
                 android:layout_weight="1"
-                android:text="13"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="13"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile13"
@@ -265,13 +251,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="1"
                 android:layout_weight="1"
-                android:text="14"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
                 android:background="@drawable/gamepiece"
+                android:gravity="center"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="14"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/Tile14"
@@ -292,12 +277,11 @@
                 android:layout_height="wrap_content"
                 android:layout_column="3"
                 android:layout_weight="1"
-                android:text="16"
                 android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@android:color/transparent"
                 android:padding="@dimen/circle_radius"
-                />
+                android:text="16"
+                android:textColor="@android:color/transparent"
+                android:textStyle="bold" />
 
         </TableRow>
 
@@ -309,10 +293,59 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="84dp"
-        android:text="New game"
+        android:layout_marginBottom="16dp"
+        android:text="Play!"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/Image_hint"
+        android:layout_width="344dp"
+        android:layout_height="175dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/btn_new_game"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/table_Game"
+        app:srcCompat="@drawable/hint_background" />
+
+    <TextView
+        android:id="@+id/points"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="Points: "
+        android:textColor="@color/quantum_cyan900"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/table_Game"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.437" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="415dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/points"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

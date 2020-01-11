@@ -65,6 +65,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -104,12 +105,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LatLng[] mLikelyPlaceLatLngs;
     private PhotoMetadata[] getPhotoPlace;
     public PlacesClient placesClient;
+    private String POINT_PREF = "Point_pref";
+    private String POINT_EDIT_REF = "Points";
     ImageView img;
+    private String PHOTO_PREF = "Photo_pref";
+    private int Starting_points = 50;
+    AtomicBoolean pic_found;
+    Intent photo_intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        SharedPreferences point_pref = getSharedPreferences(POINT_PREF, MODE_PRIVATE);
+        photo_intent = new Intent(this, GameActivity.class);
+        pic_found = new AtomicBoolean(false);
+        if(point_pref.getInt(POINT_EDIT_REF, -1) == -1){
+            //first boot.
+            SharedPreferences.Editor editor = getSharedPreferences(POINT_PREF, MODE_PRIVATE).edit();
+            editor.putInt(POINT_EDIT_REF, Starting_points);
+            editor.apply();
+        }
 
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), getString(R.string.google_maps_key), Locale.US);
@@ -287,7 +304,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     };
 
     private void getPlaceList() {
-
+        //boolean pic_found = true;
         // Use fields to define the data types to return.
         List<Place.Field> placeFields = Arrays.asList(Place.Field.NAME, Place.Field.ADDRESS,
                 Place.Field.LAT_LNG, Place.Field.ID, Place.Field.PHOTO_METADATAS);
@@ -297,13 +314,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @SuppressWarnings("MissingPermission") final FindCurrentPlaceRequest request =
                 FindCurrentPlaceRequest.builder(placeFields).build();
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    Activity#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for Activity#requestPermissions for more details.
+            getLocationPermission();
             return;
         }
         Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
@@ -326,6 +337,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         mLikelyPlaceLatLngs = new LatLng[count];
                         getmLikelyPlaceIDs = new String[count];
                         getmLikelyPlaceNum = new Double[count];
+                        getPhotoPlace = new PhotoMetadata[count];
 
                         //Find up to 5 places near the place and get their data.
                         for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
@@ -341,210 +353,61 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 getPhotoPlace[i] = currPlace.getPhotoMetadatas().get(0);
                             }
 
-
                             String currLatLng = (mLikelyPlaceLatLngs[i] == null) ?
                                     "" : mLikelyPlaceLatLngs[i].toString();
 
                             Log.i("debug", "Place " + currPlace.getName()
                                     + " has likelihood: " + placeLikelihood.getLikelihood()
-                                    + " at " + getmLikelyPlaceIDs[i]);
+                                    + " at " + getmLikelyPlaceIDs[i] + " also: ");
 
                             i++;
                             if (i > (count - 1)) {
                                 break;
                             }
-
-                            int pos = -1;
-                            if(getmLikelyPlaceNum != null){
-                                pos = 0;
-                            //Finds the place with the highest likelyhood to user.
-                            for(int j = 0; j<getmLikelyPlaceNum.length-1; j++){
-                                if(getmLikelyPlaceNum[j+1] > getmLikelyPlaceNum[j])
-                                    pos = j+1;
-                                }
-                            }
-
-                            if(getPhotoPlace[pos] != null) {
-                                FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(getPhotoPlace[pos])
-                                        .setMaxWidth(1200) // Optional.
-                                        .setMaxHeight(1200) // Optional.
-                                        .build();
-                                placesClient.fetchPhoto(photoRequest).addOnSuccessListener((fetchPhotoResponse) -> {
-                                    Bitmap bitmap = fetchPhotoResponse.getBitmap();
-                                    img.setImageBitmap(bitmap);
-                                }).addOnFailureListener((exception) -> {
-                                    if (exception instanceof ApiException) {
-                                        ApiException apiException = (ApiException) exception;
-                                        int statusCode = apiException.getStatusCode();
-                                        // Handle error with given status code.
-                                        Log.e("debug", "Photo not found: " + exception.getMessage());
-                                    }
-                                });
-
-                            }
-
-
                         }
-
-
-//                        String placeId = getmLikelyPlaceIDs[0];
-//
-//                        // Specify fields. Requests for photos must always have the PHOTO_METADATAS field.
-//                        List<Place.Field> fields = Collections.singletonList(Place.Field.PHOTO_METADATAS);
-//
-//                        // Get a Place object (this example uses fetchPlace(), but you can also use findCurrentPlace())
-//                        FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(placeId, fields);
-//
-//                        placesClient.fetchPlace(placeRequest).addOnSuccessListener((responses) -> {
-//                            Place place = responses.getPlace();
-//
-//                            if(place.getPhotoMetadatas() == null)
-//                                return;
-//                            // Get the photo metadata.
-//                            PhotoMetadata photoMetadata = place.getPhotoMetadatas().get(0);
-//
-//                            // Get the attribution text.
-//                            String attributions = photoMetadata.getAttributions();
-//
-//                            // Create a FetchPhotoRequest.
-//                            FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(photoMetadata)
-//                                    .setMaxWidth(1200) // Optional.
-//                                    .setMaxHeight(1200) // Optional.
-//                                    .build();
-//                            placesClient.fetchPhoto(photoRequest).addOnSuccessListener((fetchPhotoResponse) -> {
-//                                Bitmap bitmap = fetchPhotoResponse.getBitmap();
-//                                img.setImageBitmap(bitmap);
-//                            }).addOnFailureListener((exception) -> {
-//                                if (exception instanceof ApiException) {
-//                                    ApiException apiException = (ApiException) exception;
-//                                    int statusCode = apiException.getStatusCode();
-//                                    // Handle error with given status code.
-//                                    Log.e("debug", "Place not found: " + exception.getMessage());
-//                                }
-//                            });
-//                        });
-
-
-                        //request_photo(getmLikelyPlaceIDs[0]);
+                        int pos = -1;
+                        for(int k = 0; k<getPhotoPlace.length; k++){
+                            if(getPhotoPlace[k] != null){
+                                pos = k;
+                                break;
+                            }
+                        }
+                        String photo_ref = getPhotoPlace[pos].toString();
+                        SharedPreferences.Editor editor = getSharedPreferences(PHOTO_PREF, MODE_PRIVATE).edit();
+                        //Send the picture meta to puzzle activity
+                        editor.putString("meta", photo_ref);
+                        editor.apply();
+                        pic_found.set(true);
 
                     } else {
                         Exception exception = task.getException();
                         if (exception instanceof ApiException) {
                             ApiException apiException = (ApiException) exception;
+                            Log.d("debug", "task is: " + task.isSuccessful());
                             Log.e("debug", "Place not found: " + apiException.getStatusCode());
+                            Toast.makeText(this, "Please wait for list of places to refresh...", Toast.LENGTH_LONG).show();
+                            pic_found.set(false);
                         }
                     }
                 });
-//        // Use fields to define the data types to return.
-//        List<Place.Field> placeFields = Collections.singletonList(Place.Field.ID);
-//        // Use the builder to create a FindCurrentPlaceRequest.
-//        FindCurrentPlaceRequest request =
-//                FindCurrentPlaceRequest.newInstance(placeFields);
-//
-//        // Call findCurrentPlace and handle the response (first check that the user has granted permission).
-//        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//            Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
-//            placeResponse.addOnCompleteListener(task -> {
-//                if (task.isSuccessful()) {
-//                    FindCurrentPlaceResponse response = task.getResult();
-//                    int count;
-//                    if (response.getPlaceLikelihoods().size() < M_MAX_ENTRIES) {
-//                        count = response.getPlaceLikelihoods().size();
-//                    } else {
-//                        count = M_MAX_ENTRIES;
-//                    }
-//
-//                    int i = 0;
-//                    getmLikelyPlaceIDs = new String[count];
-//                    getmLikelyPlaceNum = new Double[count];
-//
-//                    for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
-//                        Place currPlace = placeLikelihood.getPlace();
-//                        getmLikelyPlaceNum[i] = placeLikelihood.getLikelihood();
-//                        getmLikelyPlaceIDs[i] = currPlace.getId();
-//                        Log.d("debug", "ID is: " + getmLikelyPlaceIDs[i] );
-//
-//                        Log.i("debug", String.format(
-//                                " has likelihood: " + placeLikelihood.getLikelihood()
-//                                ));
-//
-//                        i++;
-//                        if (i > (count - 1)) {
-//                            break;
-//                        }
-//                    }
-
-
-//                    int pos = -1;
-//                    if(getmLikelyPlaceNum != null){
-//                        pos = 0;
-//                        //Finds the place with the highest likelyhood to user.
-//                        for(int j = 0; j<getmLikelyPlaceNum.length-1; j++){
-//                            if(getmLikelyPlaceNum[j+1] > getmLikelyPlaceNum[j])
-//                                pos = j+1;
-//                        }
-//                    }
-//                    if(pos > -1){
-//                        Log.d("debug", "in pos");
-
-
-                        //request_photo(getmLikelyPlaceIDs[pos]);
-//                    }
-
-//
-//                } else {
-//                    Exception exception = task.getException();
-//                    if (exception instanceof ApiException) {
-//                        ApiException apiException = (ApiException) exception;
-//                        Log.e("debug", "Place not found: " + apiException.getStatusCode());
-//                    }
-//                }
-//            });
-//        }
+        hand.postDelayed(Start_Puzzle, 1000);
     }
 
-    private void request_photo(String ID){
-        List<Place.Field> fields = Collections.singletonList(Place.Field.PHOTO_METADATAS);
-        // Get a Place object (this example uses fetchPlace(), but you can also use findCurrentPlace())
-        FetchPlaceRequest placeRequest = FetchPlaceRequest.newInstance(ID, fields);
-
-        placesClient.fetchPlace(placeRequest).addOnSuccessListener((responses) -> {
-            Place place = responses.getPlace();
-
-            // Get the photo metadata.
-            if(place.getPhotoMetadatas() == null){
-                Log.d("debug", "failed to get photo");
-                return;
+    private Runnable Start_Puzzle = new Runnable() {
+        @Override
+        public void run() {
+            if(pic_found.get()){
+                hand.removeCallbacksAndMessages(Start_Puzzle);
+                pic_found.set(false);
+                startActivity(photo_intent);
             }
-            PhotoMetadata photoMetadata = place.getPhotoMetadatas().get(0);
+            else{
+                hand.postDelayed(Start_Puzzle, 1000);
+            }
+        }
+    };
 
-            // Get the attribution text.
-            String attributions = photoMetadata.getAttributions();
 
-            // Create a FetchPhotoRequest.
-            FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(photoMetadata)
-                    .setMaxWidth(1000)
-                    .setMaxHeight(1000)
-                    .build();
-            placesClient.fetchPhoto(photoRequest).addOnSuccessListener((fetchPhotoResponse) -> {
-                Bitmap bitmap = fetchPhotoResponse.getBitmap();
-                //Send the photo to game logic.
-                Log.d("debug", "test " + bitmap + "test");
-                Intent photo_intent = new Intent(this, GameActivity.class);
-                photo_intent.putExtra("BitmapImage", bitmap);
-                //startActivity(photo_intent);
-                img.setImageBitmap(bitmap);
-
-            }).addOnFailureListener((exception) -> {
-                if (exception instanceof ApiException) {
-                    ApiException apiException = (ApiException) exception;
-                    int statusCode = apiException.getStatusCode();
-                    // Handle error with given status code.
-                    Log.e("debug", "Place not found: " + exception.getMessage());
-                }
-            });
-        });
-    }
 
     private void followUser() {
         Intent i = new Intent(this, WhatsAppContacts.class);

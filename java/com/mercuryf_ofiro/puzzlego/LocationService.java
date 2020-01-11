@@ -69,12 +69,13 @@ public class LocationService extends Service {
     private String[] getmLikelyPlaceIDs;
     private Double[] getmLikelyPlaceNum;
     private LatLng[] mLikelyPlaceLatLngs;
-    private long time_interval = 300000/5;
+    private long time_interval = 300000/5;//5 mins / 5
 
     private long curr_time;
     private long base_time;
 
-    private Double close_threshold = 0.0001;
+
+    private Double close_threshold = 0.1;
 
     //LocationListener class will listen for location
     private class LocationListener implements android.location.LocationListener {
@@ -201,15 +202,16 @@ public class LocationService extends Service {
     public void onDestroy() {
         Log.e(TAG_SERVICE, "onDestroy");
         super.onDestroy();
-        if (mLocationManager != null) {
-            for (int i = 0; i < mLocationListeners.length; i++) {
-                try {
-                    mLocationManager.removeUpdates(mLocationListeners[i]);
-                } catch (Exception ex) {
-                    Log.i(TAG_SERVICE, "fail to remove location listners, ignore", ex);
-                }
-            }
-        }
+//        if (mLocationManager != null) {
+//            for (int i = 0; i < mLocationListeners.length; i++) {
+//                try {
+//                    mLocationManager.removeUpdates(mLocationListeners[i]);
+//                } catch (Exception ex) {
+//                    Log.i(TAG_SERVICE, "fail to remove location listners, ignore", ex);
+//                }
+//            }
+//        }
+//    }
     }
 
     private void initializeLocationManager() {
@@ -297,81 +299,10 @@ public class LocationService extends Service {
 
     }
 
-//    private void getCurrentPlaceLikelihoods() {
-//        // Use fields to define the data types to return.
-//        List<Place.Field> placeFields = Arrays.asList(Place.Field.NAME, Place.Field.ADDRESS,
-//                Place.Field.LAT_LNG);
-//
-//        // Get the likely places - that is, the businesses and other points of interest that
-//        // are the best match for the device's current location.
-//        @SuppressWarnings("MissingPermission") final FindCurrentPlaceRequest request =
-//                FindCurrentPlaceRequest.builder(placeFields).build();
-//        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    Activity#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for Activity#requestPermissions for more details.
-//            return;
-//        }
-//        Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
-//        placeResponse.addOnCompleteListener((Executor) this,
-//                task -> {
-//                    if (task.isSuccessful()) {
-//                        FindCurrentPlaceResponse response = task.getResult();
-//                        // Set the count, handling cases where less than 5 entries are returned.
-//                        int count;
-//                        if (response.getPlaceLikelihoods().size() < M_MAX_ENTRIES) {
-//                            count = response.getPlaceLikelihoods().size();
-//                        } else {
-//                            count = M_MAX_ENTRIES;
-//                        }
-//
-//                        int i = 0;
-//                        mLikelyPlaceNames = new String[count];
-//                        mLikelyPlaceAddresses = new String[count];
-//                        mLikelyPlaceAttributions = new String[count];
-//                        mLikelyPlaceLatLngs = new LatLng[count];
-//                        getmLikelyPlaceIDs = new String[count];
-//                        getmLikelyPlaceNum = new Double[count];
-//
-//                        for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
-//                            Place currPlace = placeLikelihood.getPlace();
-//                            mLikelyPlaceNames[i] = currPlace.getName();
-//                            mLikelyPlaceAddresses[i] = currPlace.getAddress();
-//                            mLikelyPlaceAttributions[i] = (currPlace.getAttributions() == null) ?
-//                                    null : TextUtils.join(" ", currPlace.getAttributions());
-//                            mLikelyPlaceLatLngs[i] = currPlace.getLatLng();
-//                            getmLikelyPlaceNum[i] = placeLikelihood.getLikelihood();
-//                            getmLikelyPlaceIDs[i] = currPlace.getId();
-//
-//                            String currLatLng = (mLikelyPlaceLatLngs[i] == null) ?
-//                                    "" : mLikelyPlaceLatLngs[i].toString();
-//
-//                            Log.i("debug", String.format("Place " + currPlace.getName()
-//                                    + " has likelihood: " + placeLikelihood.getLikelihood()
-//                                    + " at " + currLatLng));
-//
-//                            i++;
-//                            if (i > (count - 1)) {
-//                                break;
-//                            }
-//                        }
-//
-//
-//                        // COMMENTED OUT UNTIL WE DEFINE THE METHOD
-//                        // Populate the ListView
-//                        // fillPlacesList();
-//                    } else {
-//                        Exception exception = task.getException();
-//                        if (exception instanceof ApiException) {
-//                            ApiException apiException = (ApiException) exception;
-//                            Log.e("debug", "Place not found: " + apiException.getStatusCode());
-//                        }
-//                    }
-//                });
-//    }
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        Intent intent = new Intent("com.android.ServiceStopped");
 
+    }
 }

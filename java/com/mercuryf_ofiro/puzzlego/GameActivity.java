@@ -1,15 +1,25 @@
 package com.mercuryf_ofiro.puzzlego;
 
+import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
 
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.PhotoMetadata;
+import com.google.android.libraries.places.api.net.FetchPhotoRequest;
+import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -18,44 +28,109 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Timer;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static com.google.android.libraries.places.api.Places.createClient;
 
 public class GameActivity extends AppCompatActivity {
-
 
     GameBoard gameBoard;
     TableLayout Game_table;
     Button Start_Game;
     TextView Number_moves;
     TextView Timer_clock;
+    TextView Player_Points;
+    ImageView Image_hint;
+    ProgressBar progressBar;
     private TextView[] tiles;
     private int stopgame;
     int count = 0, pause_time = 0;
     Handler hand = new Handler();
     long MillisecondTime, StartTime, TimeBuff, UpdateTime = 0L ;
     int pause_flag = 0;
+    private String PHOTO_PREF = "Photo_pref";
+    private String POINT_PREF = "Point_pref";
+    private String POINT_EDIT_REF = "Points";
+    private String photoref_loc = "photoReference=";
+    private int Current_points;
+    private PlacesClient placesClient;
+    SharedPreferences point_pref;
+    AtomicReference<Bitmap> Photo_Bitmap;
+    AsyncPhotoBuilder asyncPhotoBuilder;
+    Bitmap[][] PuzzleList;
+    BitmapDrawable[] Picture_Pieces;
+    Boolean ready_flag = false;
+    private long Hint_time = 6000;
+    private int Hint_cost = 5;
+    private int Prize = 10;
+    SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
         Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setTitle("Puzzle 15");
+        toolbar.setTitle("PuzzleGO");
         setSupportActionBar(toolbar);
 
-        Intent Photo_get = getIntent();
-        Bitmap photo = (Bitmap) Photo_get.getParcelableExtra("BitmapImage");
-        Log.d("debug", "test " + photo + "test");
-        tiles = new TextView[16];
-        stopgame = 0;
+        PuzzleList = new Bitmap[4][4];
+        Picture_Pieces = new BitmapDrawable[17];
+        progressBar = findViewById(R.id.progressBar);
         Game_table = findViewById(R.id.table_Game);
         Start_Game = findViewById(R.id.btn_new_game);
         Number_moves = findViewById(R.id.text_moves);
         Timer_clock = findViewById(R.id.text_timer);
+        Image_hint = findViewById(R.id.Image_hint);
+        Player_Points = findViewById(R.id.points);
+        Start_Game.setEnabled(false);
+        Photo_Bitmap = new AtomicReference<>();
+        point_pref = getSharedPreferences(POINT_PREF, MODE_PRIVATE);
+        editor = point_pref.edit();
+        progressBar.setIndeterminate(false);
+        progressBar.setProgress(0);
+        progressBar.setMax(16);
+        Current_points = point_pref.getInt(POINT_EDIT_REF, 0);
+        Player_Points.setText("Points: " + String.valueOf(Current_points));
+
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), getString(R.string.google_maps_key), Locale.US);
+        }
+        placesClient = createClient(this);
+        asyncPhotoBuilder = new AsyncPhotoBuilder();
+        asyncPhotoBuilder.setProgressBar(progressBar);
+        asyncPhotoBuilder.execute(5000);
+        try{
+            PuzzleList = asyncPhotoBuilder.get(5000, TimeUnit.MILLISECONDS);
+        }
+         catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        hand.postDelayed(Start,1000);
+
+    }
+
+    private void Init_start(){
+        hand.removeCallbacksAndMessages(Start);
+        tiles = new TextView[16];
+        stopgame = 0;
 
         Start_Game.setOnClickListener(view -> {
             StartTime = SystemClock.uptimeMillis();
@@ -63,6 +138,7 @@ public class GameActivity extends AppCompatActivity {
             Start_Game();
         });
     }
+
 
     @Override
     protected void onDestroy() {
@@ -118,14 +194,76 @@ public class GameActivity extends AppCompatActivity {
         }
     };
 
+    public Runnable Start = new Runnable() {
+        @Override
+        public void run() {
+            if(asyncPhotoBuilder.getStatus() == AsyncTask.Status.FINISHED && ready_flag){
+                Start_Game.setEnabled(true);
+                Init_start();
+            }
+            if(!ready_flag)
+                hand.postDelayed(this, 0);
+        }
+    };
+
+    Runnable hint = new Runnable() {
+        @Override
+        public void run() {//Runnable for the timer on hint.
+            Image_hint.setEnabled(true);
+            Image_hint.setImageBitmap(null);
+            Image_hint.setBackgroundResource(R.drawable.hint_background);
+        }
+    };
+
+    private void regroup_puzzle(){
+        int holder = 1;
+        for(int i = 0; i < 4; i++){
+            for(int j = 0; j < 4; j++){
+               Picture_Pieces[holder] = new BitmapDrawable(getResources(), PuzzleList[j][i]);
+               holder++;
+            }
+        }
+    }
+
 
     private void Start_Game(){
+
+        regroup_puzzle();
+        Image_hint.setOnClickListener(view ->{
+
+            if(Current_points>5){
+                new AlertDialog.Builder(this).setTitle("Ge a hint").setMessage("Will you spend " + Hint_cost + " points to unlock the hint?\n You currently have " + Current_points +" Points").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Image_hint.setEnabled(false);
+                        Image_hint.setBackgroundResource(R.color.quantum_white_100);
+                        Image_hint.setImageBitmap(Photo_Bitmap.get());
+                        Current_points -= Hint_cost;
+                        editor.putInt(POINT_EDIT_REF, Current_points);
+                        editor.apply();
+                        Player_Points.setText("Points: " + Current_points);
+                        hand.postDelayed(hint, Hint_time);
+                    }
+                }).setNegativeButton(android.R.string.no, null).setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+            }
+            else{
+                Toast.makeText(this,"Not enough points to unlock a hint. \n You can buy some at our store, $5 = points!.", Toast.LENGTH_SHORT).show();
+            }
+
+
+
+        });
+
+
+        int curr_piece = -1;
         stopgame = 1;
         count = 0;
         gameBoard = new GameBoard();
         gameBoard.shuffle_Board();
         gameBoard.setMoves();
         Number_moves.setText("Moves: " + String.format("%04d", gameBoard.getMoves()));
+
         int check = -1;
         TextView text_holder = (TextView)findViewById(R.id.Tile0);
         String tile_start = "Tile";
@@ -134,9 +272,12 @@ public class GameActivity extends AppCompatActivity {
             temp_start = tile_start + String.valueOf(i);
             tiles[i] = findViewById(getResources().getIdentifier(temp_start, "id", getPackageName()));
             tiles[i].setOnClickListener(new Listener());//Listener for every textview
-            tiles[i].setText(gameBoard.getBoard()[i] + "");//Sets the textviews text to be as the game board.
+            curr_piece = gameBoard.getBoard()[i];
+            tiles[i].setText(curr_piece + "");//Sets the textviews text to be as the game board.
             if(i != 16){
-                tiles[i].setBackgroundResource(R.drawable.gamepiece);
+                //tiles[i].setBackground(puzzle_piece);
+                tiles[i].setBackground(Picture_Pieces[curr_piece]);
+                //tiles[i].setBackgroundResource(R.drawable.gamepiece);
                 tiles[i].setTextColor(Color.WHITE);
             }
             else{
@@ -144,6 +285,7 @@ public class GameActivity extends AppCompatActivity {
                 tiles[i].setBackgroundColor(Color.WHITE);
             }
         }
+
         for (int j = 0; j < tiles.length; j++) {
             check = Integer.parseInt(tiles[j].getText().toString());
             if (check == 16) {//searches for the empty slot and gives it the pressed textview number and picture.
@@ -155,7 +297,8 @@ public class GameActivity extends AppCompatActivity {
         }
         TextView holder = findViewById(R.id.Tile15);
         if(Integer.parseInt(holder.getText().toString()) != 16){
-            holder.setBackgroundResource(R.drawable.gamepiece);
+            holder.setBackground(Picture_Pieces[Integer.parseInt(holder.getText().toString())]);
+            //holder.setBackgroundResource(R.drawable.gamepiece);
             holder.setTextColor(Color.WHITE);
         }
 
@@ -179,11 +322,11 @@ public class GameActivity extends AppCompatActivity {
                 if (v.getId() == tiles[i].getId()) {//Waits til the textview pressed is the right text view.
                     num = Integer.parseInt(tiles[i].getText().toString());//Gets the text from the text view pressed.
                     if (gameBoard.shift_piece(num)) {//shifts the game board
-
                         for (int j = 0; j < tiles.length; j++) {
                             check = Integer.parseInt(tiles[j].getText().toString());
                             if (check == 16) {//searches for the empty slot and gives it the pressed textview number and picture.
-                                tiles[j].setBackgroundResource(R.drawable.gamepiece);
+                                Log.d("debug", "num is: " + num);
+                                tiles[j].setBackground(Picture_Pieces[num]);
                                 tiles[j].setTextColor(Color.WHITE);
                                 tiles[j].setText(num + "");
                                 break;
@@ -199,7 +342,7 @@ public class GameActivity extends AppCompatActivity {
                         hand.removeCallbacks(runnable);
                         stopgame = 0;
                         stopgame();//When the game end: go to the wining layout.
-                        Toast.makeText(GameActivity.this, "Game Over - Puzzle Solved", Toast.LENGTH_LONG).show();
+                        Toast.makeText(GameActivity.this, "Puzzle Solved, you have won " + Prize + " Points!", Toast.LENGTH_LONG).show();
                         Puzzle_Solved();
                     }
                     break;
@@ -210,7 +353,11 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void Puzzle_Solved() {
-
+        Current_points += Prize;
+        editor.putInt(POINT_EDIT_REF, Current_points);
+        editor.apply();
+        Intent Map = new Intent(this, MapsActivity.class);
+        startActivity(Map);
     }
 
     private int stopgame(){
@@ -230,5 +377,75 @@ public class GameActivity extends AppCompatActivity {
     }
 
 
+    @SuppressLint("StaticFieldLeak")
+    private class AsyncPhotoBuilder extends AsyncTask<Integer, Integer, Bitmap[][]>{
+
+        ProgressBar pb;
+        int status = 0;
+
+        private void setProgressBar(ProgressBar progressBar){
+            this.pb = progressBar;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap[][] bitmaps) {
+            super.onPostExecute(bitmaps);
+            Log.d("debug", "onpost");
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            pb.setProgress(values[0]);
+        }
+
+        @Override
+        protected Bitmap[][] doInBackground(Integer... integers) {
+            try{
+                int xSize = 4, ySize = 4;
+                SharedPreferences prefs = getSharedPreferences(PHOTO_PREF, MODE_PRIVATE);
+                String meta = prefs.getString("meta", "empty");
+                if(!meta.equals("empty")){
+                    int loc = meta.indexOf(photoref_loc);
+                    String holder = meta.substring(loc+photoref_loc.length());
+                    PhotoMetadata temp = PhotoMetadata.builder(holder.substring(0, holder.length()-1)).build();
+                    Log.d("debug", "temp is: " +temp);
+                    Log.d("debug", "middle");
+                    FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(temp)
+                            .setMaxWidth(800) // Optional.
+                            .setMaxHeight(800) // Optional.
+                            .build();
+                    placesClient.fetchPhoto(photoRequest).addOnSuccessListener((fetchPhotoResponse) -> {
+                        Photo_Bitmap.set(fetchPhotoResponse.getBitmap());
+                        int width, height;
+
+                        width = Photo_Bitmap.get().getWidth()/xSize;
+                        height = Photo_Bitmap.get().getHeight()/ySize;
+                        for(int i = 0; i < xSize; i++){
+                            for(int j = 0; j < ySize; j++){
+                                PuzzleList[i][j] = Bitmap.createBitmap(Photo_Bitmap.get(), i*width, j*height, width, height);
+                                status++;
+                                publishProgress(status);
+                                Log.d("debug", "Status is: " +PuzzleList[i][j]);
+                            }
+                        }
+                        ready_flag = true;
+                        Log.d("debug", "finsh");
+                    }).addOnFailureListener((exception) -> {
+                        if (exception instanceof ApiException) {
+                            ApiException apiException = (ApiException) exception;
+                            int statusCode = apiException.getStatusCode();
+                            // Handle error with given status code.
+                            Log.e("debug", "Photo not found: " + exception.getMessage());
+                        }
+                    });
+                }
+            }
+            catch (Exception e){
+                Log.d("Exception", "Error in splitting photo: " + e);
+            }
+            return PuzzleList;
+        }
+    }
 
 }
