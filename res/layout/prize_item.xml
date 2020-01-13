@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content">
+
+<TextView
+    android:id="@+id/list_Moves"
+    android:layout_width="113dp"
+    android:layout_height="0dp"
+    android:layout_marginStart="3dp"
+    android:text="@string/move_nums"
+    android:textAlignment="center"
+    android:textStyle="bold"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+<TextView
+    android:id="@+id/list_Time"
+    android:layout_width="159dp"
+    android:layout_height="0dp"
+    android:layout_marginStart="16dp"
+    android:text="@string/time"
+    android:textAlignment="center"
+    android:textStyle="bold"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toEndOf="@+id/list_Moves"
+    app:layout_constraintTop_toTopOf="parent" />
+
+<ImageView
+    android:id="@+id/list_PuzzlePhoto"
+    android:layout_width="82dp"
+    android:layout_height="62dp"
+    android:layout_marginStart="8dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toEndOf="@+id/list_Time"
+    app:layout_constraintTop_toTopOf="parent"
+    app:srcCompat="@drawable/puzzlegoicon"
+    tools:ignore="ContentDescription" />
+
+</android.support.constraint.ConstraintLayout>
