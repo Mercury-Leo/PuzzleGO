@@ -1,20 +1,17 @@
 package com.mercuryf_ofiro.puzzlego;
 
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-
-import com.google.android.libraries.places.api.model.PhotoMetadata;
 
 public class SinglePrize {
 
     private String PMoves;
     private String PTime;
-    private Bitmap PhotoMeta;
+    private String PName;
 
-    SinglePrize(String Moves, String Time,Bitmap  Meta){
-        this.PhotoMeta = Meta;
+    SinglePrize(String Moves, String Time, String Name){
         this.PMoves = Moves;
         this.PTime = Time;
+        this.PName = Name;
     }
 
     String getPMoves(){
@@ -25,7 +22,9 @@ public class SinglePrize {
         return PTime;
     }
 
-    Bitmap getPhotoMeta(){
-        return PhotoMeta;
+    String getPName(){
+        return PName;
     }
+
+
 }

@@ -1,7 +1,5 @@
 package com.mercuryf_ofiro.puzzlego;
 
-import android.Manifest;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -11,25 +9,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
@@ -37,20 +24,14 @@ import com.google.android.libraries.places.api.model.PlaceLikelihood;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
-
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Executor;
-
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static com.google.android.libraries.places.api.Places.createClient;
 
-
 public class LocationService extends Service {
-
 
     private boolean isRunning;
     private static final String TAG_GPS = "Service_GPS";
@@ -61,16 +42,10 @@ public class LocationService extends Service {
     private String textTitle = "Puzzle location";
     private String textContent = "There is a puzzle near you! Open PuzzleGO to solve it.";
     public PlacesClient placesClient;
-
     private static final int M_MAX_ENTRIES = 5;
     private String[] mLikelyPlaceNames;
-    private String[] mLikelyPlaceAddresses;
-    private String[] mLikelyPlaceAttributions;
-    private String[] getmLikelyPlaceIDs;
     private Double[] getmLikelyPlaceNum;
-    private LatLng[] mLikelyPlaceLatLngs;
     private long time_interval = 300000/5;//5 mins / 5
-
     private long curr_time;
     private long base_time;
 
@@ -133,8 +108,6 @@ public class LocationService extends Service {
                     curr_time = Calendar.getInstance().getTimeInMillis();
                     base_time = Calendar.getInstance().getTimeInMillis();
                     find_liklyplace();
-                    //Log.e(TAG_SERVICE, textContent);
-                    //showNotification(textTitle, textContent);
                 }
                 curr_time = Calendar.getInstance().getTimeInMillis();
             }
@@ -202,16 +175,6 @@ public class LocationService extends Service {
     public void onDestroy() {
         Log.e(TAG_SERVICE, "onDestroy");
         super.onDestroy();
-//        if (mLocationManager != null) {
-//            for (int i = 0; i < mLocationListeners.length; i++) {
-//                try {
-//                    mLocationManager.removeUpdates(mLocationListeners[i]);
-//                } catch (Exception ex) {
-//                    Log.i(TAG_SERVICE, "fail to remove location listners, ignore", ex);
-//                }
-//            }
-//        }
-//    }
     }
 
     private void initializeLocationManager() {
@@ -244,28 +207,12 @@ public class LocationService extends Service {
 
                     int i = 0;
                     mLikelyPlaceNames = new String[count];
-                    mLikelyPlaceAddresses = new String[count];
-                    mLikelyPlaceAttributions = new String[count];
-                    mLikelyPlaceLatLngs = new LatLng[count];
-                    getmLikelyPlaceIDs = new String[count];
                     getmLikelyPlaceNum = new Double[count];
 
                     for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
                         Place currPlace = placeLikelihood.getPlace();
                         mLikelyPlaceNames[i] = currPlace.getName();
-                        mLikelyPlaceAddresses[i] = currPlace.getAddress();
-                        mLikelyPlaceAttributions[i] = (currPlace.getAttributions() == null) ?
-                                null : TextUtils.join(" ", currPlace.getAttributions());
-                        mLikelyPlaceLatLngs[i] = currPlace.getLatLng();
                         getmLikelyPlaceNum[i] = placeLikelihood.getLikelihood();
-                        getmLikelyPlaceIDs[i] = currPlace.getId();
-
-                        String currLatLng = (mLikelyPlaceLatLngs[i] == null) ?
-                                "" : mLikelyPlaceLatLngs[i].toString();
-
-                        Log.i("debug", String.format("Place " + currPlace.getName()
-                                + " has likelihood: " + placeLikelihood.getLikelihood()
-                                + " at " + currLatLng));
 
                         i++;
                         if (i > (count - 1)) {

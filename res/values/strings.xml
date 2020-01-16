@@ -6,4 +6,6 @@
     <string name="title_activity_prize_wall">PrizeWall</string>
     <string name="move_nums">Number of moves</string>
     <string name="time">Time</string>
+    <string name="puzzle_name">Puzzle Name</string>
+    <string name="title_activity_contacts_sms">ContactsSMS</string>
 </resources>

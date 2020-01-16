@@ -5,10 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".PrizeWall"
-    tools:showIn="@layout/activity_prize_wall">
+    tools:context=".ContactsSMS"
+    tools:showIn="@layout/activity_contacts_sms">
 
     <ListView
+        android:id="@+id/list_contacts"
         android:layout_width="395dp"
         android:layout_height="659dp"
         android:layout_marginStart="8dp"
@@ -18,23 +19,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-
-        android:id="@+id/list_view"/>
-
-    <Button
-        android:id="@+id/list_clear"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="Clear"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/list_view"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/list_view"
-        app:layout_constraintTop_toTopOf="@+id/list_view"
-        app:layout_constraintVertical_bias="1.0" />
-
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

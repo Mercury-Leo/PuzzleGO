@@ -1,46 +1,30 @@
 package com.mercuryf_ofiro.puzzlego;
 
-import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
-import android.media.MediaPlayer;
-import android.os.AsyncTask;
 import android.os.Bundle;
-
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.PhotoMetadata;
 import com.google.android.libraries.places.api.net.FetchPhotoRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Calendar;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.android.libraries.places.api.Places.createClient;
@@ -54,7 +38,6 @@ public class GameActivity extends AppCompatActivity {
     TextView Timer_clock;
     TextView Player_Points;
     ImageView Image_hint;
-    ProgressBar progressBar;
     private TextView[] tiles;
     private int stopgame;
     int count = 0, pause_time = 0;
@@ -69,7 +52,6 @@ public class GameActivity extends AppCompatActivity {
     private PlacesClient placesClient;
     SharedPreferences point_pref;
     AtomicReference<Bitmap> Photo_Bitmap;
-    AsyncPhotoBuilder asyncPhotoBuilder;
     Bitmap[][] PuzzleList;
     BitmapDrawable[] Picture_Pieces;
     Boolean ready_flag = false;
@@ -77,6 +59,7 @@ public class GameActivity extends AppCompatActivity {
     private int Hint_cost = 5;
     private int Prize = 10;
     SharedPreferences.Editor editor;
+    private String puzzle_name = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +71,6 @@ public class GameActivity extends AppCompatActivity {
 
         PuzzleList = new Bitmap[4][4];
         Picture_Pieces = new BitmapDrawable[17];
-        progressBar = findViewById(R.id.progressBar);
         Game_table = findViewById(R.id.table_Game);
         Start_Game = findViewById(R.id.btn_new_game);
         Number_moves = findViewById(R.id.text_moves);
@@ -99,9 +81,6 @@ public class GameActivity extends AppCompatActivity {
         Photo_Bitmap = new AtomicReference<>();
         point_pref = getSharedPreferences(POINT_PREF, MODE_PRIVATE);
         editor = point_pref.edit();
-        progressBar.setIndeterminate(false);
-        progressBar.setProgress(0);
-        progressBar.setMax(16);
         Current_points = point_pref.getInt(POINT_EDIT_REF, 0);
         Player_Points.setText("Points: " + String.valueOf(Current_points));
 
@@ -109,24 +88,13 @@ public class GameActivity extends AppCompatActivity {
             Places.initialize(getApplicationContext(), getString(R.string.google_maps_key), Locale.US);
         }
         placesClient = createClient(this);
-        asyncPhotoBuilder = new AsyncPhotoBuilder();
-        asyncPhotoBuilder.setProgressBar(progressBar);
-        asyncPhotoBuilder.execute(5000);
-        try{
-            PuzzleList = asyncPhotoBuilder.get(5000, TimeUnit.MILLISECONDS);
-        }
-         catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
-
+        //Gets the photo.
+        get_photo();
         hand.postDelayed(Start,1000);
 
     }
 
+    //Inits the game and enables the start game button
     private void Init_start(){
         hand.removeCallbacksAndMessages(Start);
         tiles = new TextView[16];
@@ -177,6 +145,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
 
+    //Handles the timer for the puzzle.
     public Runnable runnable = new Runnable() {
 
         public void run() {
@@ -194,11 +163,13 @@ public class GameActivity extends AppCompatActivity {
         }
     };
 
+    //Waits for a photo to be found via photometadata.
     public Runnable Start = new Runnable() {
         @Override
         public void run() {
-            if(asyncPhotoBuilder.getStatus() == AsyncTask.Status.FINISHED && ready_flag){
+            if(ready_flag){
                 Start_Game.setEnabled(true);
+                ready_flag = false;
                 Init_start();
             }
             if(!ready_flag)
@@ -206,6 +177,7 @@ public class GameActivity extends AppCompatActivity {
         }
     };
 
+    //Sets up the hint for the puzzle.
     Runnable hint = new Runnable() {
         @Override
         public void run() {//Runnable for the timer on hint.
@@ -215,6 +187,7 @@ public class GameActivity extends AppCompatActivity {
         }
     };
 
+    //Changes puzzle pieces from [][] to [].
     private void regroup_puzzle(){
         int holder = 1;
         for(int i = 0; i < 4; i++){
@@ -227,12 +200,12 @@ public class GameActivity extends AppCompatActivity {
 
 
     private void Start_Game(){
-
         regroup_puzzle();
         Image_hint.setOnClickListener(view ->{
 
-            if(Current_points>5){
-                new AlertDialog.Builder(this).setTitle("Ge a hint").setMessage("Will you spend " + Hint_cost + " points to unlock the hint?\n You currently have " + Current_points +" Points").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            //Set points!
+            if(Current_points>=5){
+                new AlertDialog.Builder(this).setTitle("Hint").setMessage("Will you spend " + Hint_cost + " points to unlock the hint?\n You currently have " + Current_points +" Points").setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         Image_hint.setEnabled(false);
@@ -248,11 +221,8 @@ public class GameActivity extends AppCompatActivity {
                         .show();
             }
             else{
-                Toast.makeText(this,"Not enough points to unlock a hint. \n You can buy some at our store, $5 = points!.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,"Not enough points to unlock a hint. Solve more puzzles!", Toast.LENGTH_SHORT).show();
             }
-
-
-
         });
 
 
@@ -278,7 +248,7 @@ public class GameActivity extends AppCompatActivity {
                 //tiles[i].setBackground(puzzle_piece);
                 tiles[i].setBackground(Picture_Pieces[curr_piece]);
                 //tiles[i].setBackgroundResource(R.drawable.gamepiece);
-                tiles[i].setTextColor(Color.WHITE);
+                tiles[i].setTextColor(Color.TRANSPARENT);
             }
             else{
                 tiles[i].setTextColor(Color.TRANSPARENT);
@@ -311,9 +281,57 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    //Gets a photo via URL.
+    private Bitmap[][] get_photo() {
+        try {
+            int xSize = 4, ySize = 4;
+            //Gets the photometadata
+            SharedPreferences prefs = getSharedPreferences(PHOTO_PREF, MODE_PRIVATE);
+            String meta = prefs.getString("meta", "empty");
+            puzzle_name = prefs.getString("name", "no name");
+            if (!meta.equals("empty")) {
+                int loc = meta.indexOf(photoref_loc);
+                //Builds a valid photoref for google places to return an image.
+                String holder = meta.substring(loc + photoref_loc.length());
+                PhotoMetadata temp = PhotoMetadata.builder(holder.substring(0, holder.length() - 1)).build();
+
+                //Requests a photo with photometadata.
+                FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(temp)
+                        .setMaxWidth(800) // Optional.
+                        .setMaxHeight(800) // Optional.
+                        .build();
+                placesClient.fetchPhoto(photoRequest).addOnSuccessListener((fetchPhotoResponse) -> {
+                    Photo_Bitmap.set(fetchPhotoResponse.getBitmap());
+                    int width, height;
+
+                    //Cuts the photo to 4x4 grid
+                    width = Photo_Bitmap.get().getWidth() / xSize;
+                    height = Photo_Bitmap.get().getHeight() / ySize;
+                    for (int i = 0; i < xSize; i++) {
+                        for (int j = 0; j < ySize; j++) {
+                            PuzzleList[i][j] = Bitmap.createBitmap(Photo_Bitmap.get(), i * width, j * height, width, height);
+                            Log.d("debug", "Status is: " + PuzzleList[i][j]);
+                        }
+                    }
+                    ready_flag = true;
+                }).addOnFailureListener((exception) -> {
+                    if (exception instanceof ApiException) {
+                        ApiException apiException = (ApiException) exception;
+                        int statusCode = apiException.getStatusCode();
+                        // Handle error with given status code.
+                        Log.e("error", "Photo not found: " + exception.getMessage());
+                        startActivity(new Intent(this, MapsActivity.class));
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.d("Exception", "Error in splitting photo: " + e);
+        }
+        return PuzzleList;
+    }
 
 
-
+    //Sets click event for the puzzle
     private class Listener implements View.OnClickListener{
         @Override
         public void onClick(View v) {
@@ -352,10 +370,15 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    //Once the puzzle is solved
     private void Puzzle_Solved() {
         Current_points += Prize;
+        //Add points to user
         editor.putInt(POINT_EDIT_REF, Current_points);
         editor.apply();
+        //Saves the puzzle data into sql.
+        DBHelp db = new DBHelp(this);
+        db.addPrize(puzzle_name, String.valueOf(gameBoard.getMoves()), String.format("%04d", count));
         Intent Map = new Intent(this, MapsActivity.class);
         startActivity(Map);
     }
@@ -375,77 +398,4 @@ public class GameActivity extends AppCompatActivity {
         }
         return stopgame;
     }
-
-
-    @SuppressLint("StaticFieldLeak")
-    private class AsyncPhotoBuilder extends AsyncTask<Integer, Integer, Bitmap[][]>{
-
-        ProgressBar pb;
-        int status = 0;
-
-        private void setProgressBar(ProgressBar progressBar){
-            this.pb = progressBar;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap[][] bitmaps) {
-            super.onPostExecute(bitmaps);
-            Log.d("debug", "onpost");
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            pb.setProgress(values[0]);
-        }
-
-        @Override
-        protected Bitmap[][] doInBackground(Integer... integers) {
-            try{
-                int xSize = 4, ySize = 4;
-                SharedPreferences prefs = getSharedPreferences(PHOTO_PREF, MODE_PRIVATE);
-                String meta = prefs.getString("meta", "empty");
-                if(!meta.equals("empty")){
-                    int loc = meta.indexOf(photoref_loc);
-                    String holder = meta.substring(loc+photoref_loc.length());
-                    PhotoMetadata temp = PhotoMetadata.builder(holder.substring(0, holder.length()-1)).build();
-                    Log.d("debug", "temp is: " +temp);
-                    Log.d("debug", "middle");
-                    FetchPhotoRequest photoRequest = FetchPhotoRequest.builder(temp)
-                            .setMaxWidth(800) // Optional.
-                            .setMaxHeight(800) // Optional.
-                            .build();
-                    placesClient.fetchPhoto(photoRequest).addOnSuccessListener((fetchPhotoResponse) -> {
-                        Photo_Bitmap.set(fetchPhotoResponse.getBitmap());
-                        int width, height;
-
-                        width = Photo_Bitmap.get().getWidth()/xSize;
-                        height = Photo_Bitmap.get().getHeight()/ySize;
-                        for(int i = 0; i < xSize; i++){
-                            for(int j = 0; j < ySize; j++){
-                                PuzzleList[i][j] = Bitmap.createBitmap(Photo_Bitmap.get(), i*width, j*height, width, height);
-                                status++;
-                                publishProgress(status);
-                                Log.d("debug", "Status is: " +PuzzleList[i][j]);
-                            }
-                        }
-                        ready_flag = true;
-                        Log.d("debug", "finsh");
-                    }).addOnFailureListener((exception) -> {
-                        if (exception instanceof ApiException) {
-                            ApiException apiException = (ApiException) exception;
-                            int statusCode = apiException.getStatusCode();
-                            // Handle error with given status code.
-                            Log.e("debug", "Photo not found: " + exception.getMessage());
-                        }
-                    });
-                }
-            }
-            catch (Exception e){
-                Log.d("Exception", "Error in splitting photo: " + e);
-            }
-            return PuzzleList;
-        }
-    }
-
 }

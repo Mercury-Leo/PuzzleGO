@@ -3,19 +3,14 @@ package com.mercuryf_ofiro.puzzlego;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
-
 import android.Manifest;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -25,52 +20,32 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
-
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PointOfInterest;
-import com.google.android.gms.common.api.GoogleApi;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.PhotoMetadata;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.PlaceLikelihood;
-import com.google.android.libraries.places.api.net.FetchPhotoRequest;
-import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
-
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_CONTACTS;
 import static com.google.android.libraries.places.api.Places.createClient;
@@ -95,19 +70,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean Service_mode = false;
     private SharedPreferences.Editor edit;
     Handler hand = new Handler();
-    Button btn;
     private static final int M_MAX_ENTRIES = 5;
     private String[] mLikelyPlaceNames;
-    private String[] mLikelyPlaceAddresses;
-    private String[] mLikelyPlaceAttributions;
-    private String[] getmLikelyPlaceIDs;
-    private Double[] getmLikelyPlaceNum;
-    private LatLng[] mLikelyPlaceLatLngs;
     private PhotoMetadata[] getPhotoPlace;
     public PlacesClient placesClient;
     private String POINT_PREF = "Point_pref";
     private String POINT_EDIT_REF = "Points";
-    ImageView img;
     private String PHOTO_PREF = "Photo_pref";
     private int Starting_points = 50;
     AtomicBoolean pic_found;
@@ -118,9 +86,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        //Opens sp to check user points
         SharedPreferences point_pref = getSharedPreferences(POINT_PREF, MODE_PRIVATE);
         photo_intent = new Intent(this, GameActivity.class);
+        //sets a flag for when the photo is found.
         pic_found = new AtomicBoolean(false);
+
+        //Checks if its the users first boot, if so, give them 50 starting points.
         if(point_pref.getInt(POINT_EDIT_REF, -1) == -1){
             //first boot.
             SharedPreferences.Editor editor = getSharedPreferences(POINT_PREF, MODE_PRIVATE).edit();
@@ -128,15 +100,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             editor.apply();
         }
 
+        //Init google places.
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), getString(R.string.google_maps_key), Locale.US);
         }
         placesClient = createClient(this);
-        btn = findViewById(R.id.btn);
-        btn.setOnClickListener(view -> {
-            //showCurrentPlace();
-            //followUser();
-        });
 
         //Sets default location in case no service is accessible.
         mDefaultLocation = new LatLng(-33.852, 151.211);
@@ -158,21 +126,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 100,
                 10, locationListener);
 
+        //Checks the state of the service
         if (checkService()) {
             setService_state(true);
         }
-        img = findViewById(R.id.imageView);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
 
+
+    //Checks the service state - If the user already asked for the service to be off, it shall stay off.
     private boolean checkService() {
         SharedPreferences sp = getSharedPreferences(sp_name, MODE_PRIVATE);
         edit = getSharedPreferences(sp_name, MODE_PRIVATE).edit();
         if (sp != null) {
             Service_state = sp.getInt(sp_name, -1);
+            //If its the first boot, start service
             if (Service_state == -1) {
                 Log.d(TAG_SERVICE, "first boot");
                 edit.putInt(sp_name, Service_state);
@@ -180,10 +151,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             } else {
                 Log.d(TAG_SERVICE, "not first boot");
+                //If the user requested the service to be off, stay off.
                 if (Service_state == 0) {
                     Log.d(TAG_SERVICE, "service off");
                     return false;
                 } else {
+                    //If the user turned on/ didnt turn off, service is on.
                     Log.d(TAG_SERVICE, "service on");
                     return true;
                 }
@@ -197,14 +170,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
         //mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.night_map));
         mMap.getUiSettings().setScrollGesturesEnabled(false);
+        mMap.getUiSettings().setZoomControlsEnabled(false);
         hand.postDelayed(runnable, 0);
         mMap.setOnPoiClickListener(pointOfInterest -> {
             getPlaceList();
         });
-    }
-
-    private void get_place_photo() {
-        getPlaceList();
     }
 
     private void setService_state(boolean mode) {
@@ -292,18 +262,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            // Turn on the My Location layer and the related control on the map.
-            updateLocationUI();
+    private Runnable runnable = () -> {
+        // Turn on the My Location layer and the related control on the map.
+        updateLocationUI();
 
-            // Get the current location of the device and set the position of the map.
-            getDeviceLocation();
-        }
+        // Get the current location of the device and set the position of the map.
+        getDeviceLocation();
     };
 
     private void getPlaceList() {
+
         //boolean pic_found = true;
         // Use fields to define the data types to return.
         List<Place.Field> placeFields = Arrays.asList(Place.Field.NAME, Place.Field.ADDRESS,
@@ -332,39 +300,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         int i = 0;
                         mLikelyPlaceNames = new String[count];
-                        mLikelyPlaceAddresses = new String[count];
-                        mLikelyPlaceAttributions = new String[count];
-                        mLikelyPlaceLatLngs = new LatLng[count];
-                        getmLikelyPlaceIDs = new String[count];
-                        getmLikelyPlaceNum = new Double[count];
                         getPhotoPlace = new PhotoMetadata[count];
 
                         //Find up to 5 places near the place and get their data.
                         for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
                             Place currPlace = placeLikelihood.getPlace();
                             mLikelyPlaceNames[i] = currPlace.getName();
-                            mLikelyPlaceAddresses[i] = currPlace.getAddress();
-                            mLikelyPlaceAttributions[i] = (currPlace.getAttributions() == null) ?
-                                    null : TextUtils.join(" ", currPlace.getAttributions());
-                            mLikelyPlaceLatLngs[i] = currPlace.getLatLng();
-                            getmLikelyPlaceIDs[i] = currPlace.getId();
-                            getmLikelyPlaceNum[i] = placeLikelihood.getLikelihood();
                             if(currPlace.getPhotoMetadatas() != null){
                                 getPhotoPlace[i] = currPlace.getPhotoMetadatas().get(0);
                             }
-
-                            String currLatLng = (mLikelyPlaceLatLngs[i] == null) ?
-                                    "" : mLikelyPlaceLatLngs[i].toString();
-
-                            Log.i("debug", "Place " + currPlace.getName()
-                                    + " has likelihood: " + placeLikelihood.getLikelihood()
-                                    + " at " + getmLikelyPlaceIDs[i] + " also: ");
-
                             i++;
                             if (i > (count - 1)) {
                                 break;
                             }
                         }
+                        //Finds a place with a photo and sends it
                         int pos = -1;
                         for(int k = 0; k<getPhotoPlace.length; k++){
                             if(getPhotoPlace[k] != null){
@@ -372,10 +322,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 break;
                             }
                         }
+
                         String photo_ref = getPhotoPlace[pos].toString();
                         SharedPreferences.Editor editor = getSharedPreferences(PHOTO_PREF, MODE_PRIVATE).edit();
                         //Send the picture meta to puzzle activity
                         editor.putString("meta", photo_ref);
+                        editor.putString("name", mLikelyPlaceNames[pos]);
                         editor.apply();
                         pic_found.set(true);
 
@@ -390,29 +342,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     }
                 });
+        //Waits for request to finish
         hand.postDelayed(Start_Puzzle, 1000);
     }
 
+    //Starts the puzzle once a photo is found.
     private Runnable Start_Puzzle = new Runnable() {
         @Override
         public void run() {
+            //If a picture was found, start the puzzle.
             if(pic_found.get()){
                 hand.removeCallbacksAndMessages(Start_Puzzle);
                 pic_found.set(false);
                 startActivity(photo_intent);
             }
+            //Keep waiting for a photo.
             else{
                 hand.postDelayed(Start_Puzzle, 1000);
             }
         }
     };
 
-
-
-    private void followUser() {
-        Intent i = new Intent(this, WhatsAppContacts.class);
-        startActivity(i);
-    }
 
     //Checks for location changes and behaves accordingly.
     LocationListener locationListener = new LocationListener() {
@@ -494,7 +444,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             else{
                 success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.night_map));
             }
-
             if (!success) {
                 Log.e(TAG_DEBUG, "Style parsing failed.");
             }
@@ -520,7 +469,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_about) {
-            new AlertDialog.Builder(this).setTitle("About PuzzleGO").setMessage("This is the game Puzzle 15. \n By Mercury Finnegan & Ofir Ozeri.").setIcon(android.R.drawable.ic_dialog_alert).show();
+            new AlertDialog.Builder(this).setTitle("About PuzzleGO").setMessage("This is the PuzzleGO app! \n Click on any place in the map to start a game. \n By Mercury Finnegan & Ofir Ozeri.").setIcon(android.R.drawable.ic_dialog_alert).show();
             return true;
         }
 
@@ -556,7 +505,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         if(id == R.id.action_prize){
-
+            Intent Prize_Intent = new Intent(this, PrizeWall.class);
+            startActivity(Prize_Intent);
             return true;
         }
         return super.onOptionsItemSelected(item);
